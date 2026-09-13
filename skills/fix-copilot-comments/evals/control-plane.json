@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "suite": "fix-copilot-comments-control-plane",
+  "cases": [
+    {"id": "valid-lifecycle", "expected": "pass", "label": "complete lifecycle reaches independent verifier"},
+    {"id": "invalid-triage-schema", "expected": "reject", "label": "malformed triage cannot advance investigation"},
+    {"id": "stale-artifact", "expected": "reject", "label": "changed artifact invalidates the manifest"},
+    {"id": "git-head-mismatch", "expected": "reject", "label": "arbitrary head is rejected by Git gate"},
+    {"id": "manifest-lock", "expected": "reject", "label": "competing writer cannot mutate a locked manifest"},
+    {"id": "revision-conflict", "expected": "reject", "label": "stale compare-and-swap revision is rejected"}
+  ]
+}

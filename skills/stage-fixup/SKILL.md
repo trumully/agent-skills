@@ -16,9 +16,7 @@ The skill uses deterministic `git commit --fixup=<target-sha>` when a target is 
 3. Confirm the index is clean with `git diff --cached --quiet`. Preserve any existing staged work for its owner; do not absorb or unstage it.
 4. When a target SHA is supplied, resolve it with `git rev-parse --verify <target-sha>^{commit}`, require the resolved SHA to equal the supplied full SHA, and confirm it is reachable from the current branch with `git merge-base --is-ancestor <target-sha> HEAD`.
 5. Inspect `git status --porcelain=v1 -uall` and the worktree diff. Every non-ignored changed path must be in the approved path set. If a file mixes this fix with unrelated edits, stop and request an isolated patch or hunk set before staging.
-6. In automatic mode, probe availability with `git absorb --version`. If the
-   command is unavailable, return `blocked` with the required target SHA and
-   leave Git untouched.
+6. In automatic mode, probe availability with `git absorb --version`. If the command is unavailable, return `blocked` with the required target SHA and leave Git untouched.
 
 A failed precondition leaves Git untouched and returns `blocked` with the observed branch, head, target, mode, and conflicting paths.
 

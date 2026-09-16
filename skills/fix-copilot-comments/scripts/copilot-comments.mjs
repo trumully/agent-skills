@@ -55,6 +55,20 @@ function runGh(args, input) {
 
   return result.stdout;
 }
+function tryRunGh(args) {
+  const options = { encoding: "utf8", shell: false };
+  let result = spawnSync("gh", args, options);
+
+  if (result.error?.code === "ENOENT") {
+    result = spawnSync("gh.exe", args, options);
+  }
+
+  if (result.error || result.status !== 0) {
+    return null;
+  }
+
+  return result.stdout;
+}
 
 function parseJson(text, description) {
   try {
@@ -80,7 +94,7 @@ function getOpenPullRequests() {
   );
 }
 
-function findStack(prNumber) {
+function findStackFromPullRequests(prNumber) {
   const pullRequests = getOpenPullRequests();
   const selected = pullRequests.find((pullRequest) => pullRequest.number === prNumber);
   if (!selected) {
@@ -141,6 +155,49 @@ function findStack(prNumber) {
       url: pullRequest.url,
     })),
   };
+}
+
+function findStackWithGhStack(prNumber) {
+  const output = tryRunGh(["stack", "view", "--json"]);
+  if (output === null) {
+    return null;
+  }
+
+  let stack;
+  try {
+    stack = JSON.parse(output);
+  } catch {
+    return null;
+  }
+
+  if (!stack || typeof stack.trunk !== "string" || !Array.isArray(stack.branches)) {
+    return null;
+  }
+
+  const branches = stack.branches.filter(
+    (branch) => branch && typeof branch.name === "string" && branch.pr && Number.isInteger(branch.pr.number)
+  );
+  const selected = branches.find((branch) => branch.pr.number === prNumber);
+  const hasNonOpenBranch = branches.some(
+    (branch) => branch.pr.state !== undefined && branch.pr.state !== "OPEN"
+  );
+  if (!selected || hasNonOpenBranch) {
+    return null;
+  }
+
+  return {
+    trunk: stack.trunk,
+    prs: branches.map((branch, index) => ({
+      number: branch.pr.number,
+      head: branch.name,
+      base: index === 0 ? stack.trunk : branches[index - 1].name,
+      url: branch.pr.url,
+    })),
+  };
+}
+
+function findStack(prNumber) {
+  return findStackWithGhStack(prNumber) ?? findStackFromPullRequests(prNumber);
 }
 
 function getRepository() {

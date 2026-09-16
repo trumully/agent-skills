@@ -1,5 +1,5 @@
 ---
-name: copilot-comment-fixer
+name: copilot-comment-executor
 description: Applies an approved plan for unresolved Copilot comments on one already checked-out branch, creates only approved focused commits, validates the resulting state, and returns evidence for every comment and commit without switching branches, rebasing, pushing, or writing to GitHub.
 ---
 
@@ -26,7 +26,29 @@ Check `git branch --show-current` and `git rev-parse HEAD`. A wrong branch, miss
 
 # Implement approved groups
 
-For each approved group, make the smallest change that answers its comments. Keep unrelated behavior and files unchanged. Stage only the group's paths. Before committing, record:
+For each approved group, make the smallest change that answers its comments.
+Keep unrelated behavior and files unchanged.
+
+For a `fixup` group, verify the plan's full `targetSha` resolves to a commit, the target is an ancestor of the current `HEAD`, and the index is clean. Stage only the approved paths when each path contains only this fix. If a file mixes unrelated edits with the fix, stop the group as `question` and request an isolated patch or hunk set.
+Stage complete approved paths with `git add -- <approved-path>...`; use an approved patch for mixed files only when the hunk boundary is certain.
+
+Inspect the index before creating the fixup:
+
+```sh
+git diff --cached --name-status
+git diff --cached --check
+git diff --cached
+```
+
+The staged paths must be non-empty and belong only to the approved group. Create the local fixup with:
+
+```sh
+git commit --fixup=<targetSha>
+```
+
+Afterward, verify the new commit has the pre-commit `HEAD` as its parent, its subject begins with `fixup!`, its changed paths are approved, and the target remains an ancestor. Do not autosquash or use a normal commit as a fallback for failed fixup ownership.
+
+For a `new` group, stage only the approved paths and inspect the index before committing:
 
 ```text
 git diff --cached --name-status
@@ -34,19 +56,14 @@ git diff --cached --check
 git diff --cached --quiet
 ```
 
-The staged name-status must contain every intended path and no other path. A zero exit from `git diff --cached --quiet` means no change: return `unchanged` and do not commit. If staged leftovers or unexpected paths appear, stop the group as `question`; do not absorb, reset, or discard them.
-
-Use the approved commit kind exactly:
-
-- For `fixup`, the plan supplies one target SHA. Prefer `git commit --fixup=<targetSha>` when the target is known. `git absorb` is optional, never a prerequisite, and may run only as a read-only dry run when the plan explicitly permits it. A dry run that proposes no target, multiple targets, or a different target blocks the group. Never turn that result into an unapproved normal commit.
-- For `new`, commit one focused ordinary change only when the plan contains an approved separate-work rationale. Do not use a normal commit as a fallback for failed ownership or absorption.
+The staged name-status must contain every intended path and no other path. A zero exit from `git diff --cached --quiet` means no change: return `unchanged` and do not commit. If staged leftovers or unexpected paths appear, stop the group as `question`; do not absorb, reset, or discard them. Create one focused ordinary commit only when the plan contains an approved separate-work rationale.
 
 After each commit:
 
 1. Record the full commit SHA and subject.
 2. Verify the SHA is a new commit in `beforeHead..HEAD`, has the approved target and kind, and changes at least one intended path:
 
-```text
+```sh
 git diff-tree --no-commit-id --name-status -r <commit>^ <commit>
 git show -s --format=%H%n%s <commit>
 ```

@@ -63,8 +63,10 @@ Write `<run-dir>/plan.json` with:
 - each group's `commitKind` (`fixup` or `new`), full `targetSha` for a fixup, and ownership rationale; a new commit requires a separate-work rationale approved before editing;
 - scoped check definitions with IDs, exact commands, working directories, kind (`format`, `lint`, `build`, `test`, `behavior`, `git`), required flag, prerequisites, and when to run;
 - affected descendant branches and their validation requirements, even when they have no selected comments.
+- pre-edit `HEAD` for each affected branch and the blame/history evidence used to map each fix to its origin commit; capture these before source edits begin.
 
 Group shared root causes once and split independent work. A group must have one owner and one commit target, or an approved new-commit purpose. Do not force inseparable changes into arbitrary targets. `git absorb` may assist attribution with a bounded read-only dry run when an index already contains the relevant patch; it is not a planning prerequisite. Do not stage or edit merely to ask absorb who owns a change.
+The branch-local executor owns scoped staging and local commit creation; the coordinator still owns target selection, stack order, and approval.
 
 # 3. Approve and check execution preconditions
 
@@ -78,6 +80,10 @@ Before mutation:
 - Check `git worktree list --porcelain`: stop before moving any affected branch checked out in another worktree. Retain recovery refs for branches that will be rewritten, under a unique `refs/copilot-fixes/<run-id>/...` namespace, and record their names in the run manifest.
 
 Use plain Git for the cascade below. Stack-specific GitHub tooling is not required. If existing stack tracking is used for the final user push instruction, verify that it matches the discovered order. Mismatched tracking is not permission to rewrite it.
+The collector prefers `gh stack view --json` as a read-only stack source when
+available and falls back to its pull-request topology query when the extension
+is unavailable, the target is not in an active stack, or the output is invalid.
+The adapter never runs stack sync, push, submit, or rebase commands.
 
 # 4. Apply and integrate from bottom to top
 
@@ -94,10 +100,13 @@ One writer owns the shared worktree. Parallel read-only planning does not author
 # 5. Optional history compaction
 
 Do not rewrite history unless the user explicitly requests autosquash. Without that request, retain focused fixup and new commits for review. When requested, require successful integration, a clean worktree, unchanged expected refs, and repository permission to rewrite history.
+This section covers only the separately approved history rewrite after local fixup commits exist.
 
 Record fresh pre-squash heads and bases and recovery refs. Process each affected branch and its descendants from bottom to top, restricted to its own commit range. Verify each fixup's target is in that range and its subject identifies exactly the approved target. Ambiguous subjects or pre-existing fixups with unknown ownership stop the rewrite. Never squash the whole stack as one branch.
+Before autosquash, compare target subjects within each pre-squash commit range. Duplicate subjects make Git's subject-based fixup matching ambiguous; stop and use an explicitly verified rebase todo or another unambiguous target mapping.
 
 For each branch, run `git -c rebase.updateRefs=false -c sequence.editor=true rebase -i --autosquash --empty=stop --onto <new-base-sha> <pre-squash-base-sha> <head>`. For a single pull request, the new base is its recorded base. Stop and abort the active rebase on conflict or unexpected empty or drop. Retain already rewritten lower branches and their recovery refs. Preserve ordinary new commits. Compare each resulting tree with its pre-squash tree and use `git range-diff` plus the approved target map to account for the rewrite. Update the manifest's comment and group mappings to surviving full SHAs. Retain original fixup SHAs as history, not as the reported current commits. Reuse check results only when their relevant code, configuration, environment, and input versions are unchanged; otherwise rerun the required checks.
+After each rewrite, verify the final range contains no temporary `fixup!` or `squash!` commits, rerun the approved checks, and update every rewritten target SHA before reporting the branch.
 
 # 6. Restore and report
 

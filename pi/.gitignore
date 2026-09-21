@@ -1,0 +1,65 @@
+# Local credentials and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+auth.json
+**/auth.json
+credentials*.json
+**/credentials*.json
+*secret*.json
+**/*secret*.json
+*token*.json
+**/*token*.json
+*.pem
+*.key
+*.p12
+*.pfx
+settings.local.json
+**/settings.local.json
+
+# Pi runtime state, caches, and logs
+sessions/
+**/sessions/
+web-search-cache/
+**/web-search-cache/
+mcp-cache.json
+mcp-onboarding.json
+models-store.json
+trust.json
+*.log
+**/*.log
+*.sqlite
+*.sqlite-*
+
+# Dependencies and package-manager output
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Source-control/package caches and VCS metadata
+.git/
+**/.git/
+git/
+**/git/
+
+# Browser profiles, binaries, and generated/runtime artifacts
+.profile/
+**/.profile/
+bin/
+**/bin/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.tsbuildinfo
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+.cache/
+**/.cache/

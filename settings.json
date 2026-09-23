@@ -1,0 +1,38 @@
+{
+  "lastChangelogVersion": "0.87.1",
+  "theme": "dark",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-6-luna",
+  "enabledModels": [
+    "openai-codex/gpt-6-astra",
+    "openai-codex/gpt-6-luna",
+    "openai-codex/gpt-6-sol"
+  ],
+  "terminal": {
+    "showTerminalProgress": true
+  },
+  "transport": "auto",
+  "showCacheMissNotices": true,
+  "collapseChangelog": true,
+  "quietStartup": true,
+  "enableInstallTelemetry": false,
+  "modelThinkingLevels": {
+    "openai-codex/gpt-6-luna": "max",
+    "openai-codex/gpt-6-sol": "medium",
+    "openai-codex/gpt-6-astra": "medium"
+  },
+  "tuiMode": "fullscreen",
+  "fullscreenExitOutput": "transcript",
+  "shellPath": "J:/DevDrive/dev/programs/Git/bin/bash.exe",
+  "defaultTools": [
+    "read",
+    "powershell",
+    "edit",
+    "write"
+  ],
+  "packages": [
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:pi-web-access",
+    "local-packages\\pi-plugins"
+  ]
+}

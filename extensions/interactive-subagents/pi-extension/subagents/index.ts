@@ -96,14 +96,14 @@ const SubagentParams = Type.Object({
   agent: Type.String({
     description:
       "Which agent to spawn (e.g. 'worker', 'scout', 'researcher'). This loads the agent's " +
-      "fixed profile — its model, tool loadout, and system prompt. Must be one of the available agents.",
+      "fixed profile - its model, tool loadout, and system prompt. Must be one of the available agents.",
   }),
   task: Type.String({ description: "Task/prompt for the sub-agent" }),
   name: Type.Optional(
     Type.String({
       description:
         "Optional cosmetic label for the subagent's pane and widget row. Defaults to the agent name. " +
-        "Has no effect on which agent runs — use `agent` for that.",
+        "Has no effect on which agent runs - use `agent` for that.",
     }),
   ),
   model: Type.Optional(Type.String({ description: "Model override (overrides agent default)" })),
@@ -124,8 +124,8 @@ interface AgentDefaults {
   thinking?: string;
   /**
    * If set (non-empty), this agent is granted the full subagent spawning
-   * toolset and may only spawn the listed agents. Presence of this field —
-   * not the `tools` list — is what grants spawning. Enforced in the child via
+   * toolset and may only spawn the listed agents. Presence of this field -
+   * not the `tools` list - is what grants spawning. Enforced in the child via
    * the PI_SUBAGENT_ALLOWED env var.
    */
   subagentAgents?: string[];
@@ -162,7 +162,7 @@ const SPAWNING_TOOLS = [
   "subagents_list",
 ] as const;
 
-/** Built-in tools pi provides natively — no extension needs to be loaded. */
+/** Built-in tools pi provides natively - no extension needs to be loaded. */
 const BUILTIN_TOOLS = new Set(["read", "write", "edit", "bash", "grep", "find", "ls"]);
 
 /** Resolve the global agent config directory, respecting PI_CODING_AGENT_DIR. */
@@ -551,12 +551,12 @@ function resolveResultPresentation(
 ): string {
   if (result.errorMessage) {
     // Auto-retry exhausted or other agent-loop error. The subagent did not
-    // produce a usable result — surface the underlying provider/network
+    // produce a usable result - surface the underlying provider/network
     // failure so the orchestrator can decide whether to retry, resume, or
     // change approach instead of silently treating the run as completed.
     return (
       `Sub-agent "${name}" failed after ${formatElapsed(result.elapsed)} ` +
-      `(provider/agent error — auto-retry exhausted).\n\n` +
+      `(provider/agent error - auto-retry exhausted).\n\n` +
       `Error: ${result.errorMessage}\n\n` +
       `The subagent did not produce a result. You can retry by spawning a new ` +
       `subagent or resume the session with subagent_message.`
@@ -628,7 +628,7 @@ const runningSubagents = new Map<string, RunningSubagent>();
 // When this extension is loaded inside a subagent that itself spawns children
 // (e.g. a worker delegating to scout/researcher), `subagent-done.ts` runs in the
 // same process and needs to know whether this session still has children in
-// flight — so it can suppress auto-exit and keep the session open until they all
+// flight - so it can suppress auto-exit and keep the session open until they all
 // report back. Expose a live count through a process-global symbol that both
 // modules share. (subagent-done.ts reads it; if absent it assumes zero.)
 const RUNNING_CHILDREN_COUNT_KEY = Symbol.for("pi-subagents/running-children-count");
@@ -937,7 +937,7 @@ const reservedNames = new Set<string>();
  * Return `base`, or `base-2`, `base-3`, … so the result is unique within this
  * spawner session. Considers (a) currently-running subagents, (b) names
  * reserved by parallel in-flight spawns, and (c) every name already recorded in
- * the spawner's persistent registry — so a defaulted name never collides with a
+ * the spawner's persistent registry - so a defaulted name never collides with a
  * finished subagent either. This lets `subagent_message({ name })` address any
  * subagent of this session unambiguously, running or finished.
  *
@@ -1079,7 +1079,7 @@ function startStatusRefresh(pi: ExtensionAPI) {
       running.statusState = nextState;
 
       // Interactive subagents (long-running, user-driven) intentionally don't
-      // wake the parent session on stalled/recovered transitions — the user is
+      // wake the parent session on stalled/recovered transitions - the user is
       // working in the subagent's pane, and a steer message here would burn an
       // orchestrator turn on a no-op "still waiting" ping. Widget still updates.
       if (transition && !running.interactive) {
@@ -1156,7 +1156,7 @@ function startWidgetRefresh() {
 }
 
 /**
- * Launch a subagent in a Herdr pane. Returns a RunningSubagent — does NOT poll.
+ * Launch a subagent in a Herdr pane. Returns a RunningSubagent - does NOT poll.
  *
  * Call watchSubagent() on the returned object to observe completion.
  */
@@ -1185,7 +1185,7 @@ async function launchSubagent(
   const sessionDir = getDefaultSessionDirFor(targetCwdForSession, effectiveAgentDir);
 
   // Generate a deterministic session file path for this subagent.
-  // This eliminates race conditions when multiple agents launch simultaneously —
+  // This eliminates race conditions when multiple agents launch simultaneously -
   // each agent knows exactly which file is theirs.
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 23) + "Z";
   const uuid = [
@@ -1213,7 +1213,7 @@ async function launchSubagent(
 
   // Fork mode inherits prior conversation state. Blank-session modes need the wrapper instructions.
   const modeHint = agentDefs?.autoExit
-    ? "Complete your task autonomously. When you are finished, simply stop — your session ends automatically."
+    ? "Complete your task autonomously. When you are finished, simply stop - your session ends automatically."
     : "Complete your task. The user can interact with you at any time, and the session ends when the user exits the pane.";
   const summaryInstruction = agentDefs?.autoExit
     ? "Your FINAL assistant message should summarize what you accomplished."
@@ -1317,7 +1317,7 @@ async function launchSubagent(
   writeSubagentLoadout(subagentSessionFile, loadout);
 
   // Apply model, identity, and the default-deny tool/extension restriction via
-  // the shared helper (same code path resume uses — they can't drift).
+  // the shared helper (same code path resume uses - they can't drift).
   applySandboxToParts(parts, loadout, { artifactDir, name: params.name });
 
   // Build env prefix: subagent identity + config dir propagation + spawn allowlist
@@ -1428,17 +1428,17 @@ function deliverPendingQuestion(running: RunningSubagent): void {
     if (!existsSync(askFile)) return;
     payload = JSON.parse(readFileSync(askFile, "utf-8"));
   } catch {
-    // Malformed/partway-written file — drop it and move on.
+    // Malformed/partway-written file - drop it and move on.
   }
   try {
     unlinkSync(askFile);
   } catch {}
   if (!payload?.question) return;
 
-  const name = running.name; // unique per session (deduped at spawn) — targets the reply
+  const name = running.name; // unique per session (deduped at spawn) - targets the reply
   const sessionId = existsSync(running.sessionFile) ? getSessionId(running.sessionFile) : null;
   const elapsed = Math.floor((Date.now() - running.startTime) / 1000);
-  const replyHint = `\n\nReply with subagent_message({ name: "${name}", message: "…" }) — the same name works whether it is still running or has since exited. It stays open until you reply.`;
+  const replyHint = `\n\nReply with subagent_message({ name: "${name}", message: "…" }) - the same name works whether it is still running or has since exited. It stays open until you reply.`;
 
   latestPi?.sendMessage(
     {
@@ -1620,15 +1620,15 @@ export default function subagentsExtension(pi: ExtensionAPI) {
       description:
         "Spawn a sub-agent in a labeled Herdr tab; nested agents share the branch tab in their own panes. " +
         "This is a fire-and-forget async tool: the call returns immediately with only an acknowledgement. " +
-        "When the sub-agent finishes, the harness AUTOMATICALLY delivers its result as a steer message that wakes you up and starts a new turn — you do not need to do anything to receive it. " +
-        "DO NOT write polling loops, sleep/wait commands, tail/watch scripts, or repeatedly read session/log files to detect completion. DO NOT call subagents_list or any other tool to 'check' status. All of that is wasted work — the harness handles delivery for you. " +
+        "When the sub-agent finishes, the harness AUTOMATICALLY delivers its result as a steer message that wakes you up and starts a new turn - you do not need to do anything to receive it. " +
+        "DO NOT write polling loops, sleep/wait commands, tail/watch scripts, or repeatedly read session/log files to detect completion. DO NOT call subagents_list or any other tool to 'check' status. All of that is wasted work - the harness handles delivery for you. " +
         "Wait for the completion message before reporting results. Once it arrives, use the findings to answer the user's request. " +
         "After spawning, either end your turn immediately, or work on other independent tasks (including spawning more subagents in parallel). The harness will wake you with the result when it is ready.",
       promptSnippet:
         "Spawn a sub-agent in a labeled Herdr tab; nested agents share the branch tab in their own panes. " +
         "This is a fire-and-forget async tool: the call returns immediately with only an acknowledgement. " +
-        "When the sub-agent finishes, the harness AUTOMATICALLY delivers its result as a steer message that wakes you up and starts a new turn — you do not need to do anything to receive it. " +
-        "DO NOT write polling loops, sleep/wait commands, tail/watch scripts, or repeatedly read session/log files to detect completion. DO NOT call subagents_list or any other tool to 'check' status. All of that is wasted work — the harness handles delivery for you. " +
+        "When the sub-agent finishes, the harness AUTOMATICALLY delivers its result as a steer message that wakes you up and starts a new turn - you do not need to do anything to receive it. " +
+        "DO NOT write polling loops, sleep/wait commands, tail/watch scripts, or repeatedly read session/log files to detect completion. DO NOT call subagents_list or any other tool to 'check' status. All of that is wasted work - the harness handles delivery for you. " +
         "Wait for the completion message before reporting results. Once it arrives, use the findings to answer the user's request. " +
         "After spawning, either end your turn immediately, or work on other independent tasks (including spawning more subagents in parallel). The harness will wake you with the result when it is ready.",
       parameters: SubagentParams,
@@ -1641,7 +1641,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
             content: [
               {
                 type: "text",
-                text: `You are the ${currentAgent} agent — do not start another ${currentAgent}. You were spawned to do this work yourself. Complete the task directly.`,
+                text: `You are the ${currentAgent} agent - do not start another ${currentAgent}. You were spawned to do this work yourself. Complete the task directly.`,
               },
             ],
             details: { error: "self-spawn blocked" },
@@ -1680,7 +1680,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
               {
                 type: "text",
                 text:
-                  `You may not spawn the "${params.agent}" agent — it is not ` +
+                  `You may not spawn the "${params.agent}" agent - it is not ` +
                   `${SUBAGENT_ALLOWLIST ? "in your allowlist" : "a known agent"}. ` +
                   `Available agents: ${permittedList}.`,
               },
@@ -1718,7 +1718,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
 
         // Default the cosmetic pane label to the agent name when omitted,
         // disambiguating against running subagents, in-flight reservations, and
-        // every name already in the registry — so names stay unique across the
+        // every name already in the registry - so names stay unique across the
         // whole session, running or finished. Reserve the chosen name
         // synchronously (before any await) so parallel spawns don't collide.
         let reservedName: string | null = null;
@@ -1730,7 +1730,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         }
 
         // Launch the subagent (creates pane, sends command). Release the name
-        // reservation once it registers in runningSubagents (or launch fails) —
+        // reservation once it registers in runningSubagents (or launch fails) -
         // from then on uniqueRunningName tracks it via the running map.
         let running;
         try {
@@ -1745,6 +1745,8 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         registerName(parentArtifactDir, running.name, {
           sessionFile: running.sessionFile,
           sessionId: getSessionId(running.sessionFile),
+          ...(running.activityFile ? { activityFile: running.activityFile } : {}),
+          running: true,
         });
 
         // Create a separate AbortController for the watcher
@@ -1760,6 +1762,10 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         watchSubagent(running, watcherAbort.signal)
           .then((result) => {
             updateWidget(); // reflect removal from Map immediately
+            const registryEntry = resolveNameInRegistry(parentArtifactDir, running.name);
+            if (registryEntry) {
+              registerName(parentArtifactDir, running.name, { ...registryEntry, running: false });
+            }
 
             const presentation = resolveResultPresentation(result, running.name);
 
@@ -1786,6 +1792,10 @@ export default function subagentsExtension(pi: ExtensionAPI) {
           })
           .catch((err) => {
             updateWidget();
+            const registryEntry = resolveNameInRegistry(parentArtifactDir, running.name);
+            if (registryEntry) {
+              registerName(parentArtifactDir, running.name, { ...registryEntry, running: false });
+            }
             pi.sendMessage(
               {
                 customType: "subagent_result",
@@ -1804,7 +1814,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
               type: "text",
               text:
                 `Sub-agent "${params.name}" launched and is now running in the background. ` +
-                `Do NOT generate or assume any results — you have no idea what the sub-agent will do or produce. ` +
+                `Do NOT generate or assume any results - you have no idea what the sub-agent will do or produce. ` +
                 `The results will be delivered to you automatically as a steer message when the sub-agent finishes. ` +
                 `Until then, move on to other work or tell the user you're waiting.`,
             },
@@ -1843,7 +1853,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
 
         // Show a one-line task preview. renderCall is called repeatedly as the
         // LLM generates tool arguments, so args.task grows token by token.
-        // We keep it compact here — Ctrl+O on renderResult expands the full content.
+        // We keep it compact here - Ctrl+O on renderResult expands the full content.
         if (task) {
           const firstLine = task.split("\n").find((l: string) => l.trim()) ?? "";
           const preview = firstLine.length > 100 ? firstLine.slice(0, 100) + "…" : firstLine;
@@ -1863,13 +1873,13 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         const details = result.details as any;
         const name = details?.name ?? "(unnamed)";
 
-        // "Started" result — tool returned immediately
+        // "Started" result - tool returned immediately
         if (details?.status === "started") {
           return new Text(
             theme.fg("accent", "⟳") +
               " " +
               theme.fg("toolTitle", theme.bold(name)) +
-              theme.fg("dim", " — started"),
+              theme.fg("dim", " - started"),
             0,
             0,
           );
@@ -1907,7 +1917,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
 
         const lines = list.map((a) => {
           const badge = a.source === "project" ? " (project)" : "";
-          const desc = a.description ? ` — ${a.description}` : "";
+          const desc = a.description ? ` - ${a.description}` : "";
           const model = a.model ? ` [${a.model}]` : "";
           return `• ${a.name}${badge}${model}${desc}`;
         });
@@ -1926,7 +1936,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         }
         const lines = agents.map((a: any) => {
           const badge = a.source === "project" ? theme.fg("accent", " (project)") : "";
-          const desc = a.description ? theme.fg("dim", ` — ${a.description}`) : "";
+          const desc = a.description ? theme.fg("dim", ` - ${a.description}`) : "";
           const model = a.model ? theme.fg("dim", ` [${a.model}]`) : "";
           return `  ${theme.fg("toolTitle", theme.bold(a.name))}${badge}${model}${desc}`;
         });
@@ -1947,7 +1957,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         "`name` and `message` are both required. " +
         "Steering a running subagent returns immediately with a local acknowledgement and does NOT, by itself, emit a new result. " +
         "Resuming is a fire-and-forget async call: when the resumed sub-agent finishes, the harness AUTOMATICALLY delivers its result as a steer message that wakes you up. " +
-        "DO NOT poll, sleep, tail logs, or read session files to detect completion — the harness handles delivery. " +
+        "DO NOT poll, sleep, tail logs, or read session files to detect completion - the harness handles delivery. " +
         "DO NOT fabricate or assume results. After calling, either end your turn or work on other independent tasks.",
       promptSnippet:
         "Give a subagent actionable additional work or answer its question: steers it if running, resumes it if finished (same name either way). " +
@@ -1967,7 +1977,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
       renderCall(args, theme) {
         const target = args.name ?? "(unknown)";
         return new Text(
-          "○ " + theme.fg("toolTitle", theme.bold(target)) + theme.fg("dim", " — message"),
+          "○ " + theme.fg("toolTitle", theme.bold(target)) + theme.fg("dim", " - message"),
           0,
           0,
         );
@@ -1981,7 +1991,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
             theme.fg("success", "✓") +
               " " +
               theme.fg("toolTitle", theme.bold(details.name ?? "subagent")) +
-              theme.fg("dim", " — message delivered"),
+              theme.fg("dim", " - message delivered"),
             0,
             0,
           );
@@ -1992,7 +2002,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
             theme.fg("accent", "⟳") +
               " " +
               theme.fg("toolTitle", theme.bold(details.name ?? "Resume")) +
-              theme.fg("dim", " — resumed"),
+              theme.fg("dim", " - resumed"),
             0,
             0,
           );
@@ -2052,7 +2062,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
           return { content: [{ type: "text" as const, text: err }], details: { error: err } };
         }
 
-        // Guard: never resume a session that is still running — two processes
+        // Guard: never resume a session that is still running - two processes
         // mutating the same .jsonl corrupts it. Steer it by name instead.
         for (const r of runningSubagents.values()) {
           if (resolve(r.sessionFile) === resolve(sessionPath)) {
@@ -2156,6 +2166,12 @@ export default function subagentsExtension(pi: ExtensionAPI) {
           }),
         };
         runningSubagents.set(id, running);
+        registerName(parentArtifactDir, name, {
+          sessionFile: sessionPath,
+          sessionId: resumedSessionId,
+          activityFile,
+          running: true,
+        });
         startWidgetRefresh();
         startStatusRefresh(pi);
 
@@ -2166,6 +2182,10 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         watchSubagent(running, watcherAbort.signal)
           .then((result) => {
             updateWidget();
+            const registryEntry = resolveNameInRegistry(parentArtifactDir, name);
+            if (registryEntry) {
+              registerName(parentArtifactDir, name, { ...registryEntry, running: false });
+            }
 
             const allEntries = getNewEntries(sessionPath, entryCountBefore);
             const summary = findLastAssistantMessage(allEntries) ??
@@ -2199,6 +2219,10 @@ export default function subagentsExtension(pi: ExtensionAPI) {
           })
           .catch((err) => {
             updateWidget();
+            const registryEntry = resolveNameInRegistry(parentArtifactDir, name);
+            if (registryEntry) {
+              registerName(parentArtifactDir, name, { ...registryEntry, running: false });
+            }
             pi.sendMessage(
               {
                 customType: "subagent_result",
@@ -2223,7 +2247,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
       },
     });
 
-  // /subagent command — spawn a subagent by name
+  // /subagent command - spawn a subagent by name
   pi.registerCommand("subagent", {
     description: "Spawn a subagent: /subagent <agent> <task>",
     handler: async (args, ctx) => {
@@ -2274,7 +2298,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
           : theme.fg("success", "✓");
         const agentTag = details.agent ? theme.fg("dim", ` (${details.agent})`) : "";
         const modelTag = stats?.model ? theme.fg("dim", ` (${stats.model})`) : "";
-        const titleSegment = `${icon} ${theme.fg("toolTitle", theme.bold(name))}${agentTag}${modelTag} ${theme.fg("dim", "—")} `;
+        const titleSegment = `${icon} ${theme.fg("toolTitle", theme.bold(name))}${agentTag}${modelTag} ${theme.fg("dim", "-")} `;
 
         // Success: icon already conveys "completed", so show "N tools · duration"
         // like the in-process extension. Failure: surface the failure reason.
@@ -2310,7 +2334,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
           .replace(`Sub-agent "${name}" failed (exit code ${exitCode}).\n\n`, "")
           .replace(
             new RegExp(
-              `^Sub-agent "${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}" failed after ${elapsed} \\(provider/agent error — auto-retry exhausted\\)\\.\\n\\n`,
+              `^Sub-agent "${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}" failed after ${elapsed} \\(provider/agent error - auto-retry exhausted\\)\\.\\n\\n`,
             ),
             "",
           );
@@ -2404,7 +2428,7 @@ export default function subagentsExtension(pi: ExtensionAPI) {
         const bgFn = (text: string) => theme.bg("toolSuccessBg", text);
 
         const icon = theme.fg("accent", "?");
-        const header = `${icon} ${theme.fg("toolTitle", theme.bold(name))}${agentTag} ${theme.fg("dim", "— asks a question")}`;
+        const header = `${icon} ${theme.fg("toolTitle", theme.bold(name))}${agentTag} ${theme.fg("dim", "- asks a question")}`;
 
         const contentLines = [header];
 

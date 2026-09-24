@@ -1,6 +1,6 @@
 ---
 name: test-ping
-description: Integration test agent — calls caller_ping instead of completing task
+description: Integration test agent - calls caller_ping instead of completing task
 model: anthropic/claude-haiku-4-5
 tools: read, bash
 spawning: false

@@ -1,5 +1,5 @@
 /**
- * Prompt Snippets — mix-and-match single-purpose prompt rules.
+ * Prompt Snippets - mix-and-match single-purpose prompt rules.
  *
  * Each snippet is a markdown file with frontmatter (name, description,
  * placement, order) stored in the `snippets/` directory next to this file.
@@ -139,17 +139,17 @@ export default function (pi: ExtensionAPI) {
 			const itemRow = (snippet: Snippet, idx: number, width: number): string => {
 				const pointer = idx === cursor ? theme.fg("accent", "> ") : "  ";
 				const checkbox = working.has(snippet.id) ? theme.fg("success", "[x]") : theme.fg("dim", "[ ]");
-				const desc = snippet.description ? theme.fg("dim", ` — ${snippet.description}`) : "";
+				const desc = snippet.description ? theme.fg("dim", ` - ${snippet.description}`) : "";
 				return truncateToWidth(`${pointer}${checkbox} ${theme.bold(snippet.name)}${desc}`, width);
 			};
 
 			/** List rows with the item index each row corresponds to (null for headers/blanks). */
 			const buildListRows = (width: number): { text: string; itemIndex: number | null }[] => {
 				const rows: { text: string; itemIndex: number | null }[] = [];
-				rows.push({ text: theme.fg("dim", "↑ PREPEND — added before your message"), itemIndex: null });
+				rows.push({ text: theme.fg("dim", "↑ PREPEND - added before your message"), itemIndex: null });
 				prepends.forEach((s, i) => rows.push({ text: itemRow(s, i, width), itemIndex: i }));
 				rows.push({ text: "", itemIndex: null });
-				rows.push({ text: theme.fg("dim", "↓ APPEND — added after your message"), itemIndex: null });
+				rows.push({ text: theme.fg("dim", "↓ APPEND - added after your message"), itemIndex: null });
 				appends.forEach((s, i) => rows.push({ text: itemRow(s, prepends.length + i, width), itemIndex: prepends.length + i }));
 				return rows;
 			};

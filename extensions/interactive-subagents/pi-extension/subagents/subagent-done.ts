@@ -10,7 +10,7 @@
  * `ask_question` keeps the session OPEN: it writes a `${sessionFile}.ask`
  * signal the parent's watcher picks up, parks the session in a "waiting" state
  * (auto-exit is suppressed for that turn via `awaitingAnswer`), and the parent
- * replies with subagent_message — which lands as the subagent's next turn.
+ * replies with subagent_message - which lands as the subagent's next turn.
  */
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Box, Text } from "@mariozechner/pi-tui";
@@ -29,7 +29,7 @@ export function shouldMarkUserTookOver(agentStarted: boolean): boolean {
  * children (e.g. a worker delegating to scout/researcher), `index.ts` runs in
  * the same process and publishes a live count through a shared process-global
  * symbol. A subagent that spawns children and then writes a "waiting for
- * results" message would otherwise auto-exit the instant that turn ends —
+ * results" message would otherwise auto-exit the instant that turn ends -
  * killing the session before its children report back. Reading this count lets
  * `agent_end` keep the session open until every child has finished and its
  * result has been delivered.
@@ -57,7 +57,7 @@ export function shouldAutoExitOnAgentEnd(
   // open for inspection or another prompt.
   //
   // stopReason: "error" (e.g. exhausted retries on a provider overload) also
-  // returns true — we want to shut down so the parent is woken up — but we
+  // returns true - we want to shut down so the parent is woken up - but we
   // pair this with findLatestAssistantError() so the parent learns it was an
   // error, not a clean completion.
   if (messages) {
@@ -136,7 +136,7 @@ export default function (pi: ExtensionAPI) {
 
         if (expanded) {
           // Expanded: full tool list + denied
-          const countInfo = theme.fg("dim", ` — ${toolNames.length} available`);
+          const countInfo = theme.fg("dim", ` - ${toolNames.length} available`);
           const hint = theme.fg("muted", "  (Ctrl+Alt+O to collapse)");
 
           const toolList = toolNames
@@ -159,7 +159,7 @@ export default function (pi: ExtensionAPI) {
           box.addChild(content);
         } else {
           // Collapsed: one-line summary
-          const countInfo = theme.fg("dim", ` — ${toolNames.length} tools`);
+          const countInfo = theme.fg("dim", ` - ${toolNames.length} tools`);
           const deniedInfo =
             denied.length > 0
               ? theme.fg("dim", " · ") + theme.fg("error", `${denied.length} denied`)
@@ -180,7 +180,7 @@ export default function (pi: ExtensionAPI) {
   let agentStarted = false;
   // Set when ask_question is called; suppresses auto-exit so the session stays
   // open while it waits for the orchestrator's reply. Cleared when the reply
-  // lands — on `input` (covers a reply steered into the current run) and on
+  // lands - on `input` (covers a reply steered into the current run) and on
   // `agent_start` (covers a reply that starts a fresh turn after parking).
   let awaitingAnswer = false;
 
@@ -196,7 +196,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("input", () => {
     recorder.input();
-    // A submitted message is the orchestrator's (or a human's) reply — the
+    // A submitted message is the orchestrator's (or a human's) reply - the
     // pending ask_question has been answered, however it was delivered. Clear
     // here, not only on agent_start, because a reply steered in *mid-run* is
     // absorbed into the current run (pi's `steer` behavior injects it before
@@ -217,7 +217,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("agent_start", () => {
     agentStarted = true;
-    // A new turn is starting — any pending ask_question has now been answered
+    // A new turn is starting - any pending ask_question has now been answered
     // (or superseded), so let auto-exit resume normally when this turn ends.
     awaitingAnswer = false;
     recorder.agentStart();
@@ -258,7 +258,7 @@ export default function (pi: ExtensionAPI) {
             }),
           );
         } catch {
-          // Best effort — even without the sidecar, watcher's session-file
+          // Best effort - even without the sidecar, watcher's session-file
           // fallback can still recover the errorMessage.
         }
       }
@@ -336,17 +336,17 @@ export default function (pi: ExtensionAPI) {
       "Ask the orchestrator (the parent agent that spawned you) a single question and pause until they reply. " +
       "Use this when requirements are ambiguous, a decision would materially affect your work, you're blocked, " +
       "or you need information or confirmation only the orchestrator has. Prefer asking over guessing. " +
-      "Your session stays open while you wait — the answer arrives as your next message, then you continue. " +
+      "Your session stays open while you wait - the answer arrives as your next message, then you continue. " +
       "Ask exactly one question per call; make separate calls for unrelated questions.",
     promptSnippet:
-      "Use this tool to ask the orchestrator one clarifying, missing-requirement, preference, or decision question before continuing — instead of guessing.",
+      "Use this tool to ask the orchestrator one clarifying, missing-requirement, preference, or decision question before continuing - instead of guessing.",
     promptGuidelines: [
       "Ask exactly one question per tool call.",
       "If you need answers to multiple things, make separate ask_question calls instead of bundling them.",
       "Prefer this tool over guessing when requirements, preferences, or implementation choices are unclear.",
       "Use it when multiple valid paths exist and the right one depends on the orchestrator's intent.",
       "Give enough context in the question that the orchestrator can answer without re-reading your whole task.",
-      "After asking, stop and wait — the reply will arrive as your next message.",
+      "After asking, stop and wait - the reply will arrive as your next message.",
     ],
     parameters: Type.Object({
       question: Type.String({
@@ -375,17 +375,21 @@ export default function (pi: ExtensionAPI) {
       };
       writeFileSync(`${sessionFile}.ask`, JSON.stringify(askData));
 
-      return {
+      const result = {
         content: [
           {
             type: "text",
             text:
-              "Question sent to the orchestrator. Stop here and wait — do not continue working or " +
+              "Question sent to the orchestrator. Stop here and wait - do not continue working or " +
               "assume an answer. Their reply will arrive as your next message.",
           },
         ],
         details: { question: params.question },
       };
+      // Pi's agent loop uses `terminate` to skip the automatic model request
+      // after this tool batch. `Object.assign` keeps the result compatible with
+      // older peer type definitions that don't declare this runtime field.
+      return Object.assign(result, { terminate: true as const });
     },
 
     renderCall(args, theme) {

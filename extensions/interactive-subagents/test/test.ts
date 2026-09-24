@@ -1,7 +1,7 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { visibleWidth } from "@mariozechner/pi-tui";
@@ -56,6 +56,7 @@ import {
   runningChildrenCount,
 } from "../pi-extension/subagents/subagent-done.ts";
 import subagentDoneExtension from "../pi-extension/subagents/subagent-done.ts";
+import { collectSubagentUsage } from "../pi-extension/subagents/usage.ts";
 
 // --- Helpers ---
 
@@ -315,7 +316,7 @@ describe("session.ts", () => {
       // Prime the index (first call builds it).
       writeSession(dir, "first.jsonl", "id-first");
       assert.equal(resolveSessionFileById("id-first", dir) !== null, true);
-      // Add a new session AFTER the index was built — no reset. The resolver's
+      // Add a new session AFTER the index was built - no reset. The resolver's
       // cheap refresh should index it.
       const b = writeSession(dir, "second.jsonl", "id-second");
       assert.equal(resolveSessionFileById("id-second", dir), b);
@@ -1144,12 +1145,12 @@ describe("subagent discovery", () => {
   });
 
   it("resolveEffectiveInteractive defaults to the inverse of auto-exit", () => {
-    // Autonomous agents (auto-exit: true) are NOT interactive — parent gets stall pings.
+    // Autonomous agents (auto-exit: true) are NOT interactive - parent gets stall pings.
     assert.equal(
       testApi.resolveEffectiveInteractive({ name: "A", task: "T" }, { autoExit: true }),
       false,
     );
-    // Agents without auto-exit ARE interactive — parent does not receive status transition pings.
+    // Agents without auto-exit ARE interactive - parent does not receive status transition pings.
     assert.equal(
       testApi.resolveEffectiveInteractive({ name: "A", task: "T" }, { autoExit: false }),
       true,
@@ -1646,6 +1647,11 @@ describe("subagent-done.ts", () => {
 
         assert.equal(shutdownCalled, false, "ask_question must keep the session open");
         assert.match(out.content[0].text, /wait/i);
+        assert.equal(
+          out.terminate,
+          true,
+          "ask_question must stop the current tool batch so Pi waits for the orchestrator instead of making another model request",
+        );
 
         const askFile = `${sessionFile}.ask`;
         assert.ok(existsSync(askFile), ".ask signal file should be written");
@@ -1653,7 +1659,7 @@ describe("subagent-done.ts", () => {
         assert.equal(payload.question, "Which API base URL?");
         assert.equal(payload.name, "scout-2");
         assert.equal(payload.agent, "scout");
-        // No .exit sidecar — the session is not exiting.
+        // No .exit sidecar - the session is not exiting.
         assert.ok(!existsSync(`${sessionFile}.exit`));
       } finally {
         restore();
@@ -1725,7 +1731,7 @@ describe("subagent-done.ts", () => {
       try {
         emit("agent_start");
         await ask();
-        // No input yet — the orchestrator has not replied.
+        // No input yet - the orchestrator has not replied.
         let shutdown = false;
         emit("agent_end", { messages: [] }, { shutdown() { shutdown = true; } });
         assert.equal(shutdown, false, "pending question with no reply must park, not exit");
@@ -1944,6 +1950,87 @@ describe("tool registration", () => {
     const names = registeredTools.map((tool) => tool.name);
     assert.equal(names.includes("subagent_interrupt"), false);
     assert.equal(names.includes("subagent_resume"), false);
+  });
+});
+
+describe("subagent usage rollup", () => {
+  function writeSession(file: string, id: string, parentSession?: string) {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({ type: "session", id, parentSession }) + "\n");
+  }
+
+  function writeActivity(file: string, runningChildId: string) {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({
+      version: 1,
+      runningChildId,
+      createdAt: 1_000,
+      updatedAt: 2_000,
+      sequence: 1,
+      latestEvent: "agent_start",
+      phase: "active",
+      agentActive: true,
+      turnActive: false,
+      providerActive: false,
+      toolActive: false,
+    }));
+  }
+
+  it("uses registry completion state for nested children when activity snapshots are stale", () => {
+    withTempDir((dir) => {
+      const sessionsDir = join(dir, "sessions");
+      const rootArtifacts = join(sessionsDir, "artifacts", "root-id");
+      const childSession = join(sessionsDir, "child.jsonl");
+      const grandchildSession = join(sessionsDir, "grandchild.jsonl");
+      const childArtifacts = join(sessionsDir, "artifacts", "child-id");
+      const childActivity = join(rootArtifacts, "subagent-activity", "child-run.json");
+      const grandchildActivity = join(childArtifacts, "subagent-activity", "grandchild-run.json");
+
+      writeSession(childSession, "child-id");
+      writeSession(grandchildSession, "grandchild-id", childSession);
+      writeActivity(childActivity, "child-run");
+      writeActivity(grandchildActivity, "grandchild-run");
+      mkdirSync(rootArtifacts, { recursive: true });
+      writeFileSync(join(rootArtifacts, "subagent-registry.json"), JSON.stringify({
+        child: {
+          sessionFile: childSession,
+          sessionId: "child-id",
+          activityFile: childActivity,
+          running: false,
+        },
+      }));
+      mkdirSync(childArtifacts, { recursive: true });
+      writeFileSync(join(childArtifacts, "subagent-registry.json"), JSON.stringify({
+        grandchild: {
+          sessionFile: grandchildSession,
+          sessionId: "grandchild-id",
+          activityFile: grandchildActivity,
+          running: false,
+        },
+      }));
+
+      const usage = collectSubagentUsage(rootArtifacts);
+      assert.equal(usage.sessionCount, 2);
+      assert.equal(usage.runningCount, 0);
+    });
+  });
+
+  it("falls back to activity state for registry entries without a running flag", () => {
+    withTempDir((dir) => {
+      const rootArtifacts = join(dir, "root-artifacts");
+      const childSession = join(dir, "child.jsonl");
+      const childActivity = join(rootArtifacts, "subagent-activity", "child-run.json");
+      writeSession(childSession, "child-id");
+      writeActivity(childActivity, "child-run");
+      mkdirSync(rootArtifacts, { recursive: true });
+      writeFileSync(join(rootArtifacts, "subagent-registry.json"), JSON.stringify({
+        child: { sessionFile: childSession, sessionId: "child-id", activityFile: childActivity },
+      }));
+
+      const usage = collectSubagentUsage(rootArtifacts);
+      assert.equal(usage.sessionCount, 1);
+      assert.equal(usage.runningCount, 1);
+    });
   });
 });
 
@@ -2198,7 +2285,7 @@ describe("subagent interruption", () => {
 
     try {
       // A finished subagent's name lives in the registry even though nothing is
-      // running — a fresh default must skip it so names stay unique session-wide.
+      // running - a fresh default must skip it so names stay unique session-wide.
       const registryNames = new Set(["worker", "worker-2"]);
       assert.equal(testApi.uniqueRunningName("worker", registryNames), "worker-3");
       // A name not in the registry (or running/reserved) is unaffected.
@@ -2354,7 +2441,7 @@ describe("subagent interruption", () => {
 
   it("renders a clear provider/agent error when errorMessage is set", () => {
     // Previously, an overload retry-exhaustion produced exitCode 0 with a
-    // stale summary — the orchestrator thought the subagent finished
+    // stale summary - the orchestrator thought the subagent finished
     // quickly. With the error sidecar plumbed through, the presentation
     // must call out the failure, include the underlying error, and tell the
     // orchestrator how to recover.

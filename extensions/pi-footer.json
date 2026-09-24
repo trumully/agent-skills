@@ -1,0 +1,401 @@
+{
+  "version": 1,
+  "enabled": true,
+  "preset": "demo-standard",
+  "lines": [
+    [
+      {
+        "id": "custom-text-muemtn9v-wxjy7z",
+        "type": "custom-text",
+        "enabled": true,
+        "options": {
+          "text": "Preset 'default':",
+          "fg": "pi:success",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "model-provider-muemtn9v-8zz0gg",
+        "type": "model-provider",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "cyan",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "thinking-level-muemtn9v-x1jwga",
+        "type": "thinking-level",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "magenta",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "text-verbosity-muemtn9v-m6ugr4",
+        "type": "text-verbosity",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "cyan",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "context-length-muemtn9v-h07iht",
+        "type": "context-length",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenZero": false,
+          "icon": "",
+          "fg": "brightBlack",
+          "bg": "default",
+          "bold": false,
+          "tokenFormatStyle": "default",
+          "contextConditionalColors": false,
+          "contextWarningPercent": 70,
+          "contextDangerPercent": 90,
+          "warningFg": "yellow",
+          "warningBg": "default",
+          "dangerFg": "red",
+          "dangerBg": "default"
+        }
+      },
+      {
+        "id": "git-branch-muemtn9v-k7gufz",
+        "type": "git-branch",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "magenta",
+          "bg": "default",
+          "bold": false,
+          "gitBranchDisplayStyle": "default",
+          "surroundLeft": "",
+          "surroundRight": ""
+        }
+      },
+      {
+        "id": "git-diff-muemtn9v-2ucll2",
+        "type": "git-diff",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "yellow",
+          "bg": "default",
+          "bold": false,
+          "gitDiffMode": "compact"
+        }
+      },
+      {
+        "id": "cost-muemtn9v-od0hsr",
+        "type": "cost",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "green",
+          "bg": "default",
+          "bold": false,
+          "costFormatStyle": "default",
+          "showSubscription": false
+        }
+      },
+      {
+        "id": "total-time-muemtn9v-f4tl59",
+        "type": "total-time",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "yellow",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "custom-text-muemtn9v-1qbiuq",
+        "type": "custom-text",
+        "enabled": true,
+        "options": {
+          "text": "",
+          "fg": "pi:success",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "custom-text-muemtn9v-eg9wau",
+        "type": "custom-text",
+        "enabled": true,
+        "options": {
+          "text": "Preset 'compact':",
+          "fg": "pi:success",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "model-muemtn9v-efcejs",
+        "type": "model",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "cyan",
+          "bg": "default",
+          "bold": false,
+          "showProvider": false
+        }
+      },
+      {
+        "id": "thinking-level-muemtn9v-goknkg",
+        "type": "thinking-level",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "magenta",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "text-verbosity-muemtn9v-47clud",
+        "type": "text-verbosity",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "cyan",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "git-branch-muemtn9v-uw792o",
+        "type": "git-branch",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "magenta",
+          "bg": "default",
+          "bold": false,
+          "gitBranchDisplayStyle": "default",
+          "surroundLeft": "",
+          "surroundRight": ""
+        }
+      },
+      {
+        "id": "context-muemtn9v-bag9u8",
+        "type": "context",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "blue",
+          "bg": "default",
+          "bold": false,
+          "contextConditionalColors": false,
+          "contextWarningPercent": 70,
+          "contextDangerPercent": 90,
+          "warningFg": "yellow",
+          "warningBg": "default",
+          "dangerFg": "red",
+          "dangerBg": "default"
+        }
+      },
+      {
+        "id": "cost-muemtn9v-ivmgfp",
+        "type": "cost",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "green",
+          "bg": "default",
+          "bold": false,
+          "costFormatStyle": "default",
+          "showSubscription": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "custom-text-muemtn9v-hrmhhl",
+        "type": "custom-text",
+        "enabled": true,
+        "options": {
+          "text": "",
+          "fg": "pi:success",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "custom-text-muemtn9v-9t3a2k",
+        "type": "custom-text",
+        "enabled": true,
+        "options": {
+          "text": "Preset 'git-heavy':",
+          "fg": "pi:success",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ],
+    [
+      {
+        "id": "model-provider-muemtn9v-hwo2zg",
+        "type": "model-provider",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "icon": "",
+          "fg": "cyan",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "cwd-basename-muemtn9v-3evk8m",
+        "type": "cwd-basename",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "blue",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "git-branch-muemtn9v-jmpfeb",
+        "type": "git-branch",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "magenta",
+          "bg": "default",
+          "bold": false,
+          "gitBranchDisplayStyle": "default",
+          "surroundLeft": "",
+          "surroundRight": ""
+        }
+      },
+      {
+        "id": "git-sha-muemtn9v-wjuq0t",
+        "type": "git-sha",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "brightBlack",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "git-status-muemtn9v-gesym4",
+        "type": "git-status",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "yellow",
+          "bg": "default",
+          "bold": false
+        }
+      },
+      {
+        "id": "git-diff-muemtn9v-45xwhg",
+        "type": "git-diff",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "yellow",
+          "bg": "default",
+          "bold": false,
+          "gitDiffMode": "compact"
+        }
+      },
+      {
+        "id": "git-ahead-behind-muemtn9v-eyv3vi",
+        "type": "git-ahead-behind",
+        "enabled": true,
+        "options": {
+          "raw": false,
+          "hideWhenEmpty": false,
+          "icon": "",
+          "text": "",
+          "fg": "cyan",
+          "bg": "default",
+          "bold": false
+        }
+      }
+    ]
+  ],
+  "separator": "dot",
+  "separatorFg": "default",
+  "separatorBg": "default",
+  "iconMode": "nerd",
+  "minimalist": false,
+  "terminal": {
+    "widthMode": "full",
+    "colorLevel": "ansi256"
+  },
+  "extensionStatusRow": {
+    "hiddenKeys": [],
+    "knownKeys": []
+  }
+}

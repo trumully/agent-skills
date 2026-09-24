@@ -87,7 +87,7 @@ export function seedSubagentSessionFile(params: {
  * Written next to the session file as `<sessionFile>.loadout.json` at spawn
  * time. Resume replays this exact snapshot so the reincarnated process gets the
  * same `--no-extensions` + `--tools` restriction, model, identity, spawn
- * whitelist, cwd, and config dir it originally ran with — instead of falling
+ * whitelist, cwd, and config dir it originally ran with - instead of falling
  * back to pi's default (all global extensions + full toolset). Storing the
  * resolved loadout (rather than re-deriving from the agent `.md` by name) keeps
  * resume faithful even if the agent definition is later edited, moved, or
@@ -149,7 +149,7 @@ export function readSubagentLoadout(sessionFile: string): SubagentLoadout | null
 // own children) gets a registry mapping a subagent's display name to the
 // session file it ran in. Names are unique per spawner session and persist on
 // disk, so `subagent_message({ name })` can steer a running subagent or resume
-// a finished one by the same handle — even across a pi restart. The registry
+// a finished one by the same handle - even across a pi restart. The registry
 // lives in the spawner's own artifact dir, which is directly addressable from
 // the spawner's session id (no sessions-tree scan, so resume stays fast).
 
@@ -158,6 +158,10 @@ export interface NameRegistryEntry {
   sessionFile: string;
   /** Canonical session header id (kept for display/lineage). */
   sessionId: string | null;
+  /** Activity snapshot path for Pi children; absent for older records and Claude CLI children. */
+  activityFile?: string;
+  /** Spawner-observed process state; authoritative when present because activity snapshots can lag shutdown. */
+  running?: boolean;
 }
 
 export type NameRegistry = Record<string, NameRegistryEntry>;
@@ -233,13 +237,13 @@ export function getLeafId(sessionFile: string): string | null {
  * Read the canonical session id from a session file's header.
  *
  * pi's `--session <id>` flag resolves against this header `id` (exact match,
- * then prefix), NOT the filename — so this is the value to hand back to the
+ * then prefix), NOT the filename - so this is the value to hand back to the
  * orchestrator for follow-ups.
  */
 /**
  * Read only the first line of a file without loading the whole thing into
  * memory. Session files grow to many MB, but the header we need is always the
- * first JSON line, so reading a small prefix keeps header lookups cheap — this
+ * first JSON line, so reading a small prefix keeps header lookups cheap - this
  * is what makes scanning a large session tree fast enough to avoid blocking the
  * event loop. Returns the first line (sans trailing newline), or null.
  */
@@ -282,6 +286,42 @@ function readHeaderId(sessionFile: string): string | null {
 }
 
 /**
+ * IDs of entries copied from a parent session when this subagent was forked.
+ * Subtracting these from usage totals avoids billing the parent's prior work a
+ * second time when the footer aggregates parent and child sessions.
+ */
+export function getInheritedSessionEntryIds(sessionFile: string): Set<string> {
+  const firstLine = readFirstLine(sessionFile)?.trim();
+  if (!firstLine) return new Set();
+
+  let parentSessionFile: string | undefined;
+  try {
+    const header = JSON.parse(firstLine) as { parentSession?: unknown };
+    if (typeof header.parentSession === "string") parentSessionFile = header.parentSession;
+  } catch {
+    return new Set();
+  }
+  if (!parentSessionFile) return new Set();
+
+  const ids = new Set<string>();
+  try {
+    for (const line of readFileSync(parentSessionFile, "utf8").split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const entry = JSON.parse(line) as { id?: unknown };
+        if (typeof entry.id === "string") ids.add(entry.id);
+      } catch {
+        // Ignore a partial trailing line while the parent session is active.
+      }
+    }
+  } catch {
+    // The parent transcript may no longer be available. Keep the child's own
+    // usage visible rather than failing the entire aggregate.
+  }
+  return ids;
+}
+
+/**
  * Resolve a session id (or id prefix) to a session file path by scanning every
  * `*.jsonl` under `sessionsRoot` and matching the header `id`. Mirrors pi's own
  * resolution order: exact match first, then prefix match. Most recently
@@ -292,7 +332,7 @@ function readHeaderId(sessionFile: string): string | null {
  *
  * Resolving a session id naively walks every `.jsonl` under the sessions tree
  * and reads each header. With a few thousand sessions that is thousands of
- * synchronous open/read/stat syscalls — on the extension host's single thread
+ * synchronous open/read/stat syscalls - on the extension host's single thread
  * that blocks the entire terminal UI for many seconds (measured ~67s on a
  * 2010-file tree). To avoid that, we build the index once per root and cache
  * it; subsequent lookups are O(1). The cache is validated cheaply (a directory
@@ -467,7 +507,7 @@ export function getNewEntries(sessionFile: string, afterLine: number): SessionEn
  * Find the last assistant message text in a list of entries.
  *
  * Falls back to the `errorMessage` field when the last assistant message has
- * `stopReason: "error"` and no usable text content — this happens when
+ * `stopReason: "error"` and no usable text content - this happens when
  * auto-retry exhausts on a provider overload / rate limit / server error, and
  * without this fallback the parent would silently see a stale earlier message.
  */
@@ -571,7 +611,10 @@ export interface SessionStats {
  * context size is taken from the last assistant turn's `totalTokens` (the live
  * context window occupancy). Returns null if the file can't be read.
  */
-export function summarizeSessionStats(sessionFile: string): SessionStats | null {
+export function summarizeSessionStats(
+  sessionFile: string,
+  options: { excludeEntryIds?: ReadonlySet<string> } = {},
+): SessionStats | null {
   let entries: SessionEntry[];
   try {
     entries = readEntries(sessionFile);
@@ -590,34 +633,47 @@ export function summarizeSessionStats(sessionFile: string): SessionStats | null 
     cost: 0,
   };
 
+  const addUsage = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    const usage = value as Record<string, unknown>;
+    const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+    stats.inputTokens += num(usage.input);
+    stats.outputTokens += num(usage.output);
+    stats.cacheReadTokens += num(usage.cacheRead);
+    stats.cacheWriteTokens += num(usage.cacheWrite);
+    const cost = usage.cost;
+    if (cost && typeof cost === "object") stats.cost += num((cost as Record<string, unknown>).total);
+  };
+
   for (const entry of entries) {
+    if (options.excludeEntryIds?.has(entry.id)) continue;
     if (entry.type === "model_change") {
       const modelId = (entry as { modelId?: unknown }).modelId;
       if (typeof modelId === "string" && modelId) stats.model = modelId;
       continue;
     }
-    if (entry.type !== "message") continue;
-    const msg = (entry as MessageEntry).message;
-    if (msg.role !== "assistant") continue;
-
-    const model = (msg as { model?: unknown }).model;
-    if (typeof model === "string" && model) stats.model = model;
-
-    for (const block of msg.content) {
-      if (block.type === "toolCall") stats.toolCount++;
+    if (entry.type === "usage" || entry.type === "branch_summary" || entry.type === "compaction") {
+      addUsage(entry.usage);
+      continue;
     }
+    if (entry.type !== "message") continue;
+    const msg = (entry as MessageEntry).message as MessageEntry["message"] & {
+      model?: unknown;
+      usage?: Record<string, unknown>;
+    };
 
-    const usage = (msg as { usage?: Record<string, unknown> }).usage;
-    if (usage && typeof usage === "object") {
-      const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
-      stats.inputTokens += num(usage.input);
-      stats.outputTokens += num(usage.output);
-      stats.cacheReadTokens += num(usage.cacheRead);
-      stats.cacheWriteTokens += num(usage.cacheWrite);
-      const total = num(usage.totalTokens);
-      if (total > 0) stats.contextTokens = total;
-      const cost = usage.cost;
-      if (cost && typeof cost === "object") stats.cost += num((cost as Record<string, unknown>).total);
+    if (msg.role === "assistant") {
+      if (typeof msg.model === "string" && msg.model) stats.model = msg.model;
+      for (const block of msg.content) {
+        if (block.type === "toolCall") stats.toolCount++;
+      }
+      addUsage(msg.usage);
+      const total = msg.usage?.totalTokens;
+      if (typeof total === "number" && Number.isFinite(total) && total > 0) {
+        stats.contextTokens = total;
+      }
+    } else if (msg.role === "toolResult") {
+      addUsage(msg.usage);
     }
   }
 

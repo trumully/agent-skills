@@ -148,7 +148,7 @@ export function createTabSurface(
   const workspaceId = process.env.HERDR_WORKSPACE_ID;
   if (!workspaceId) throw new Error("Cannot create a subagent tab without HERDR_WORKSPACE_ID.");
 
-  const labelPrefix = `sub: ${name.replace(/\s+/g, " ").trim()} — `;
+  const labelPrefix = `sub: ${name.replace(/\s+/g, " ").trim()} - `;
   const taskText = task.replace(/\s+/g, " ").trim();
   const labelBudget = Math.max(0, 60 - labelPrefix.length);
   const taskLabel = taskText.length > labelBudget

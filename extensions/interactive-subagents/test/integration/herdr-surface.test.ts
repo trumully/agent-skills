@@ -35,7 +35,7 @@ import {
 
 const backends = getAvailableBackends();
 if (backends.length === 0) {
-  console.log("⚠️  Herdr is not available — skipping Herdr surface integration tests");
+  console.log("⚠️  Herdr is not available - skipping Herdr surface integration tests");
   console.log("   Run this test from a Pi process inside a Herdr pane.");
 }
 
@@ -71,7 +71,7 @@ for (const backend of backends) {
       const parent = createTrackedSurface(env, "branch-root");
       const parentTab = getSurfaceTab(parent);
       assert.ok(parentTab, "expected the top-level subagent to get its own tab");
-      assert.equal(getTabLabel(parentTab), "sub: branch-root — Herdr surface integration test");
+      assert.equal(getTabLabel(parentTab), "sub: branch-root - Herdr surface integration test");
 
       const child = createTrackedSurfaceSplit(env, "branch-child", "right", parent);
       assert.equal(getSurfaceTab(child), parentTab);

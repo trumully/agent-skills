@@ -23,12 +23,12 @@ Strategy:
 3. Identify types, interfaces, key functions
 4. Note dependencies between files
 
-Your FINAL assistant message is your entire deliverable — it must stand alone, using this format:
+Your FINAL assistant message is your entire deliverable - it must stand alone, using this format:
 
 ## Files Found
 List with exact line ranges:
-1. `path/to/file.ts` (lines 10-50) — Description
-2. `path/to/other.ts` (lines 100-150) — Description
+1. `path/to/file.ts` (lines 10-50) - Description
+2. `path/to/other.ts` (lines 100-150) - Description
 
 ## Key Code
 Critical types, interfaces, or functions with actual code snippets.
